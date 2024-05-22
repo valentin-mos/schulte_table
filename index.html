@@ -1,0 +1,251 @@
+<!--
+version at 11-05-2024
+author - Valentin Grevtsov
+e-mail: 12mpx@mail.ru
+-->
+
+<!doctype html>
+<html lang='ru'>
+<head>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Таблица Шульте</title>
+<style>
+*	{
+	margin: 0;
+	padding: 0;
+	font-size: 100%;}
+	
+body {
+	direction: ltr;
+	padding-top: 12px;
+	font-family: Arial, sans-serif;}	
+ 
+h1	{
+	margin: 12px 0;
+	text-align: center;
+	font-size: 18px;
+	font-weight: 400;}
+ 
+#root {
+	margin: auto;
+	text-align: center;}
+
+.flex-box {	
+	display: inline-flex;
+	flex-direction: column;}
+
+.flex-elem {
+	padding: 10px;
+	border: 2px solid #000;}
+	
+.flex-box .flex-elem:first-child {
+	border-radius: 4px 4px 0px 0px;
+	border-bottom-width: 1px;}
+	
+.flex-box .flex-elem:last-child {
+	border-radius: 0px 0px 4px 4px;
+	border-top-width: 1px;}	
+	
+select {
+	margin-right: 10px;
+	padding: 2px;
+	vertical-align: top;
+	cursor: pointer;}
+	
+input[type='button'] {
+	padding: 1px 2px 2px;
+	vertical-align: top;
+	cursor: pointer;}
+
+table {
+	border-collapse: collapse;
+	margin: auto;}
+
+td {
+	width: 44px;
+	height: 44px;
+	text-align: center;
+	vertical-align: middle;
+	font-weight: 700;
+	border: 1px solid black;	
+	background: #f9f9f9;}
+	
+@media (min-width: 576px) {
+	td {
+		cursor: pointer;
+	}
+}	
+
+.content-box p {
+	padding-bottom: 12px;
+	text-align: center;
+	white-space: nowrap;}
+
+.highlight {
+	background: #fcc;}
+</style>
+
+</head>
+
+<body>
+
+<h1>Таблица Шульте</h1>
+
+<div id='root'>
+	<div class='flex-box'>	
+		<div class='flex-elem'>
+			<select name='table-size'>
+				<option value='4'>4x4
+				<option value='5' selected>5x5
+				<option value='6'>6x6
+				<option value='7'>7x7
+			</select>			
+			<input type='button' value='Обновить'>			
+		</div>	
+		<div class='flex-elem content-box'>
+			<p>Время выполнения <span id='time_in_span'>00:00:00</span>
+		</div>
+	</div>
+</div>
+
+<script>
+"use strict";
+
+let elem_select = document.querySelector('select');
+elem_select.addEventListener('change', createTable);
+
+let elem_button = document.querySelector('[type=button]');
+elem_button.addEventListener('click', createTable);
+
+// создаем таблицу	
+function createTable(){
+
+	// если таблица существует, то удаляем ее
+	let tables = document.getElementById("example_table");
+	if(tables)
+		tables.remove();	
+	
+	// получаем размер создаваемой таблицы
+	let table_size = elem_select.options[elem_select.selectedIndex].value;
+	// console.log(table_size);
+	let max_num = table_size ** 2;
+
+	// создаем массив чисел от 1 до table_size*table_size
+	let arr=[], result=[];
+
+	// создаем массив чисел
+	for(let i=1; i <= max_num; i++)
+		arr.push(i);
+	// console.log(arr);
+
+	// создаем массив чисел в случайном порядке
+	for(let i=0; i < max_num; i++)
+		result.push(arr.splice(Math.floor(Math.random()*arr.length), 1));
+	// console.log(result);
+
+	let content_box = document.querySelector('.content-box');
+	// console.log(content_box);
+
+	let tbl = document.createElement("table");
+	tbl.setAttribute('id', 'example_table');
+	let count = 0;
+	for(let i = 0; i < table_size; i++) {
+		let tr = tbl.insertRow();
+		for(let i = 0; i < table_size; i++) {
+			let td = tr.insertCell();
+			td.appendChild(document.createTextNode(`${result[count++]}`));			
+		}
+	}
+	content_box.appendChild(tbl);
+	
+	// усанавливаем начальное значение таймеру
+	time_in_span.textContent = '00:00:00';
+	
+	action(max_num);
+	
+}
+createTable();
+
+
+// подсветка нажатой ячейки и время выполнения
+function action(max_num){
+	// console.log('max_num = ' + max_num);
+
+	let selectedTd, clickCount = 1;
+
+	example_table.onclick = function(event) {
+	
+		// где был клик?
+		let target = event.target; 
+
+		// нажали не на TD? тогда не интересует
+		if (target.tagName != 'TD')
+			return;
+			
+		// считаем кол-во кликов
+		if(clickCount == target.textContent){
+			clickCount++;
+			// console.log(clickCount);			
+			// подсветить TD
+			highlight(target);			
+		}
+		
+		// Запускаем таймер
+		if(target.textContent == 1)
+			startTimer(target);
+			
+		if(max_num == clickCount - 1){
+			// Останавливаем таймер
+			endTimer(target);
+			clickCount = null;
+			example_table.onclick = null;
+			console.log('haha');
+		}
+		
+	};
+
+	function highlight(td) {
+		// console.log(td.textContent);
+		// убрать существующую подсветку, если есть
+		if(selectedTd) {
+			// console.log(selectedTd);
+			selectedTd.classList.remove('highlight');
+		}
+		selectedTd = td;
+		// подсветить новый td
+		selectedTd.classList.add('highlight');
+	}	
+	
+	let startTime;	
+	function startTimer(){
+		startTime = new Date();
+	}
+	
+	function endTimer(){	
+		let endTime = new Date();
+		let duration = endTime - startTime;		
+		// вызываем ф-цию msToTime()
+		time_in_span.textContent = msToTime(duration);		
+	}
+
+} // action
+
+
+// форматирование времени выполнения задания
+function msToTime(duration) {
+	let seconds = Math.floor((duration / 1000) % 60);
+	let minutes = Math.floor((duration / (1000 * 60)) % 60);
+	let hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+	hours = (hours < 10) ? "0" + hours : hours;
+	minutes = (minutes < 10) ? "0" + minutes : minutes;
+	seconds = (seconds < 10) ? "0" + seconds : seconds;
+	// возвращаем отформатированное время
+	return hours + ":" + minutes + ":" + seconds;
+}
+
+</script>
+
+</body>
+
+</html>
